@@ -63,9 +63,16 @@ async function copy(text) {
 function buildPrompt() {
   const fen = chess.fen()
 
+  // Get and shuffle the legal moves
   const legalMoves = chess
     .moves({ verbose: true })
     .map(m => m.from + m.to + (m.promotion || ''))
+
+  // Fisher-Yates Shuffle
+  for (let i = legalMoves.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [legalMoves[i], legalMoves[j]] = [legalMoves[j], legalMoves[i]];
+  }
 
   const pgn = chess.pgn() || '(Game start)'
 
@@ -92,12 +99,13 @@ Game history (PGN):
 
 ${pgn}
 
-Legal UCI moves:
+Legal UCI moves (shuffled):
 
 ${legalMoves.join('\n')}
 
-Respond with exactly one legal move in UCI format.
-
+Respond with exactly one legal move in UCI format. Unless you would like to resign or offer a draw, in which case respond with "resign" or "draw" respectively.
+Do not just pick the top move - try to find the best move in the position! You can use any strategy or heuristic you like.
+The Legal UCI moves are shuffled to encourage you to think rather than just pick the first one. If you want to use a specific move ordering, you can reorder the moves in your response, but make sure to still respond with exactly one move.
 Examples:
 
 e2e4
