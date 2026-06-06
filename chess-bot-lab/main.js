@@ -11,6 +11,7 @@ import 'chessground/assets/chessground.cburnett.css'
 const chess = new Chess()
 
 const savedPGN = localStorage.getItem("saved-pgn")
+const pgn = chess.pgn() || '(Game start)'
 
 if (savedPGN) {
   chess.loadPgn(savedPGN)
@@ -58,25 +59,142 @@ async function copy(text) {
 // =====================
 function buildPrompt() {
   const fen = chess.fen()
-  const turn = chess.turn() === 'w' ? 'White' : 'Black'
 
-  const moves = chess.moves({ verbose: true })
+  const legalMoves = chess
+    .moves({ verbose: true })
     .map(m => m.from + m.to + (m.promotion || ''))
 
-  return `You are ${turn}
+  const pgn = chess.pgn() || '(Game start)'
 
-The Current FEN is:
+  return `
+You are playing ${
+    chess.turn() === 'w'
+      ? 'White'
+      : 'Black'
+}.
+
+Current FEN:
+
 ${fen}
 
-Legal moves:
-${moves.join('\n')}
+ASCII board:
 
-Respond with your move in UCI format (e.g. e2e4).
-Only respond with the move, no explanation or commentary.
-Take as long as you need to think, There is no time limit in this game of chess.`
+${buildAsciiBoard()}
+
+${buildPieceList()}
+
+${buildExtraInfo()}
+
+Game history (PGN):
+
+${pgn}
+
+Legal UCI moves:
+
+${legalMoves.join('\n')}
+
+Respond with exactly one legal move in UCI format.
+
+Examples:
+
+e2e4
+g1f3
+e7e8q
+
+Do not include explanations or commentary.
+`.trim()
 }
 
 copyBtn.onclick = () => copy(buildPrompt())
+
+function buildAsciiBoard() {
+  const board = chess.board()
+
+  let out = ''
+
+  for (let rank = 8; rank >= 1; rank--) {
+    out += rank + ' | '
+
+    for (let file = 0; file < 8; file++) {
+      const piece = board[8 - rank][file]
+
+      if (!piece) {
+        out += '. '
+      } else {
+        let c = piece.type
+
+        if (piece.color === 'w') {
+          c = c.toUpperCase()
+        }
+
+        out += c + ' '
+      }
+    }
+
+    out += '\n'
+  }
+
+  out += '    a b c d e f g h'
+
+  return out
+}
+
+function buildPieceList() {
+  const board = chess.board()
+
+  const white = []
+  const black = []
+
+  for (let r = 0; r < 8; r++) {
+    for (let f = 0; f < 8; f++) {
+      const piece = board[r][f]
+
+      if (!piece) continue
+
+      const square =
+        String.fromCharCode(97 + f) + (8 - r)
+
+      const name = {
+        k: 'King',
+        q: 'Queen',
+        r: 'Rook',
+        b: 'Bishop',
+        n: 'Knight',
+        p: 'Pawn'
+      }[piece.type]
+
+      if (piece.color === 'w') {
+        white.push(`${name}: ${square}`)
+      } else {
+        black.push(`${name}: ${square}`)
+      }
+    }
+  }
+
+  return `White pieces:
+${white.join('\n')}
+
+Black pieces:
+${black.join('\n')}`
+}
+
+function buildExtraInfo() {
+  const fenParts = chess.fen().split(' ')
+
+  return `
+Side to move: ${chess.turn() === 'w' ? 'White' : 'Black'}
+
+In check: ${chess.isCheck() ? 'Yes' : 'No'}
+
+Castling rights: ${fenParts[2]}
+
+En passant square: ${
+    fenParts[3] === '-'
+      ? 'None'
+      : fenParts[3]
+  }
+`
+}
 
 // =====================
 // CHECKMATE OVERLAY (BIG TEXT)
