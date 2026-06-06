@@ -250,7 +250,32 @@ const board = Chessground(document.getElementById('board'), {
       after: (from, to) => {
         if (updating) return
 
-        const move = chess.move({ from, to })
+        let promotion
+
+const piece = chess.get(from)
+
+if (
+  piece?.type === 'p' &&
+  (
+    (piece.color === 'w' && to.endsWith('8')) ||
+    (piece.color === 'b' && to.endsWith('1'))
+  )
+) {
+  promotion = prompt(
+    'Promote to (q, r, b, n):',
+    'q'
+  )?.toLowerCase()
+
+  if (!['q', 'r', 'b', 'n'].includes(promotion)) {
+    promotion = 'q'
+  }
+}
+
+const move = chess.move({
+  from,
+  to,
+  promotion
+})
 
         if (!move) {
           update()
