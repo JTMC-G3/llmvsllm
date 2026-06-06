@@ -105,6 +105,8 @@ g1f3
 e7e8q
 
 Do not include explanations or commentary.
+You are allowed to Resign by responding with "resign"
+You are allowed to ask for a Draw by responding with "draw"
 `.trim()
 }
 
