@@ -10,6 +10,7 @@ import 'chessground/assets/chessground.cburnett.css'
 // =====================
 const chess = new Chess()
 
+
 const savedPGN = localStorage.getItem("saved-pgn")
 const pgn = chess.pgn() || '(Game start)'
 
@@ -27,6 +28,8 @@ document.addEventListener('keydown', (e) => {
     if (move) update()
   }
 })
+
+
 
 // =====================
 // COPY BUTTON
@@ -107,6 +110,62 @@ Do not include explanations or commentary.
 
 copyBtn.onclick = () => copy(buildPrompt())
 
+function getBoardOrientation() {
+  return board.state.orientation || 'white'
+}
+
+function pixelToSquare(x, y) {
+  const boardEl = document.querySelector('cg-board')
+  if (!boardEl) return null
+
+  const size = boardEl.getBoundingClientRect().width
+  const sq = size / 8
+
+  let file = Math.floor(x / sq)
+  let rank = Math.floor(y / sq)
+
+  if (getBoardOrientation() === 'black') {
+    file = 7 - file
+    rank = 7 - rank
+  }
+
+  return (
+    String.fromCharCode(97 + file) +
+    (8 - rank)
+  )
+}
+function updateACASCompatibility() {
+  // Expose current FEN
+  window.__ACAS_FEN__ = chess.fen()
+
+  // Expose board orientation
+  window.__ACAS_ORIENTATION__ =
+    board.state.orientation === 'black' ? 'b' : 'w'
+
+  // Build a square -> piece map
+  const pieces = {}
+
+  const boardState = chess.board()
+
+  for (let r = 0; r < 8; r++) {
+    for (let f = 0; f < 8; f++) {
+      const p = boardState[r][f]
+
+      if (!p) continue
+
+      const square =
+        String.fromCharCode(97 + f) +
+        (8 - r)
+
+      pieces[square] = {
+        color: p.color,
+        type: p.type
+      }
+    }
+  }
+
+  window.__ACAS_BOARD__ = pieces
+}
 function buildAsciiBoard() {
   const board = chess.board()
 
@@ -462,6 +521,10 @@ board.set({
   downloadBtn.innerText = 'Download PGN'
 }
 localStorage.setItem("saved-pgn", chess.pgn())
+window.__ACAS_FEN__ = chess.fen()
+window.__CHESS_FEN__ = chess.fen()
+document.body.dataset.fen = chess.fen()
+updateACASCompatibility()
   updating = false
 }
 
