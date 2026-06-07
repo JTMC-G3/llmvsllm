@@ -14,11 +14,25 @@ const chess = new Chess()
 const savedPGN = localStorage.getItem("saved-pgn")
 const pgn = chess.pgn() || '(Game start)'
 
+
 if (savedPGN) {
   chess.loadPgn(savedPGN)
 }
 
 let updating = false
+
+// main.js
+const wasmSupported = typeof WebAssembly === 'object';
+const engine = new Worker(wasmSupported ? './engine/stockfish.wasm.js' : './engine/stockfish.js');
+
+engine.onmessage = (event) => {
+    console.log("Stockfish says:", event.data);
+    // Parse evaluation here
+};
+
+// Start communication
+engine.postMessage('uci');
+engine.postMessage('isready');
 
 document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
@@ -536,6 +550,7 @@ window.__CHESS_FEN__ = chess.fen()
 document.body.dataset.fen = chess.fen()
 updateACASCompatibility()
   updating = false
+  copyBtn.click()
 }
 
 // =====================

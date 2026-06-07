@@ -3,12 +3,17 @@ body {
   gap: 20px;
   padding: 20px;
   font-family: monospace;
+  background-color: #000000; /* Sets background to black */
+  color: #ffffff;           /* Ensures your text is white so it stays readable */
 }
+
 
 #board {
   width: 500px;
   height: 500px;
 }
+
+
 
 textarea {
   width: 500px;
